@@ -1,6 +1,7 @@
 # FSxForLustre_GPUDirectStorage
 
-ここでは、**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から解説するものです。
+ここでは、**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説します。より高い性能を追求するためには、計算機科学の視点からAWSの実装を抑えておくことはとても重要です。
+
 まず、GPUDirect Storageの前に、RDMAを簡単に理解しておく必要があります。
 
 # 1. What is RDMA ?
