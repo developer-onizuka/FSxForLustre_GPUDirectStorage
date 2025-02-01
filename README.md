@@ -285,7 +285,7 @@ In GDS, GPU provides its BAR and the NVMe's DMA Engine accesses the physical add
 ```
 
 # 5. GPUDirect RDMA
-前述のGPUDirect Storageは、GPUメモリとNVMeとの間でのDMAでした。GPUDirect RDMAは、別ノードにおけるGPUメモリとGPUメモリの間でのDMAとして扱われるものです。イメージとしてはこんな感じです。70Bの大規模言語モデルでは、このパラメータを更新するだけでも、約140GB程度の容量が必要になってくるため、テンソル並列、パイプライン並列のようなモデル並列を行うことがあります。これらの並列化手法の中では、ニューラルネットワークの各層の処理が終わる度にAll Reduceのような集団通信を発生させ、GPU間で直接データ交換が必要になってきます。   
+前述のGPUDirect Storageは、GPUメモリとNVMeとの間でのDMAでした。GPUDirect RDMAは、別ノードにおけるGPUメモリとGPUメモリの間でのDMAとして扱われるものです。つまり先述したRDMAです。ただし、コピー先がホストメモリではなくGPUメモリになります。70Bの大規模言語モデルでは、このパラメータを更新するだけでも、約140GB程度の容量が必要になってくるため、テンソル並列、パイプライン並列のようなモデル並列を行うことがあります。これらの並列化手法の中では、ニューラルネットワークの各層の処理が終わる度にAll Reduceのような集団通信を発生させ、GPU間で直接データ交換が必要になってきます。   
 このようにホストメモリを介さず、直接GPUメモリ間でのデータ交換をする際に、GPUDirect RDMAが用いられることになります。
 
 ![gpudirect-rdma.png](https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/GPUDirect/gpudirect-rdma.png)
