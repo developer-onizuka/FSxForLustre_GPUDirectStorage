@@ -244,7 +244,7 @@ Step 5.
 GDSのDMAオペレーションでは、ホストメモリの代わりに、PCI デバイス上の BAR スペースをターゲットとして使用することになります。GDS では、GPU がその BAR を提供し、NVMe の DMA エンジンは、カーネルが GPU の BAR を介してマッピングした物理アドレスにアクセスします。 GDSに関するDMA は、NVMe の DMA エンジンによって、GPU BAR スペースと NVMe BAR スペース (わずか 16KB、正規の NVMe デバイスに必要) 間のコピーを通じて実行されます。 (GPU の DMA エンジンによるものではありません)    
 詳細は、[What is GPUDirect Storage?](https://github.com/developer-onizuka/what_is_GPUDirect-Storage)を参照してください。
 
-<img src="https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/magnum-io-gpudirect-storage-l.svg" width="840">
+<img src="https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/magnum-io-gpudirect-storage-l.svg" width="800">
 
 ---
 We can use BAR space on a PCI device as a target instead of host memory for DMA operation. According the P2P DMA, One device needs to present a memory BAR, and the other one accesses it. 
