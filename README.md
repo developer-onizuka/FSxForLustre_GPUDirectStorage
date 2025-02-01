@@ -328,7 +328,7 @@ The principle is to copy data using the DMA engine of the NIC with RDMA enabled,
 ```
 
 # 6. Summary
-今回、HPCや機械学習など高スループットが必要なワークロードに最適な**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説をしました。また、データサイエンティストとデベロッパーが高品質の機械学習 (ML) モデルを準備、構築、トレーニング、およびデプロイするのを支援する**Amazon SageMaker AI** は、インスタンス間での高速なデータ交換をするためのGPUDirect RDMAを解説しました。
+今回、HPCや機械学習など高スループットが必要なワークロードに最適な**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説をしました。また、データサイエンティストとデベロッパーが高品質の機械学習 (ML) モデルを準備、構築、トレーニング、およびデプロイするのを支援する**Amazon SageMaker AI** においては、インスタンス間での高速なデータ交換をするためのGPUDirect RDMAを解説しました。
 
 ---
-I explained a detailed explanation from a hardware perspective about GPUDirect Storage used in **AWS FSx For Luster**, which is ideal for workloads that require high throughput such as HPC and machine learning. Amazon SageMaker AI also helps data scientists and developers prepare, build, train, and deploy high-quality machine learning (ML) models for fast data exchange between instances. Also explained GPUDirect RDMA.
+I explained a detailed explanation from a hardware perspective about GPUDirect Storage used in **AWS FSx For Luster**, which is ideal for workloads that require high throughput such as HPC and machine learning. Amazon SageMaker AI also helps data scientists and developers prepare, build, train, and deploy high-quality machine learning (ML) models with fast data exchange between instances. Also explained GPUDirect RDMA.
