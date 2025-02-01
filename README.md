@@ -72,9 +72,15 @@ The problem is these heavy interrupts itself which introduce additional CPU work
 ```
 
 # 3. Zero Copy (Kernel Bypass)
+DMAの問題を克服することを考えてみましょう。アイデアの 1 つは、コンテキストの切り替えが起こらないようにカーネルをバイパスすることです。ユーザーは物理アドレスを参照できないため、ユーザーアプリケーションは仮想アドレスを介してプログラムされます。ユーザプログラム内で「verbs API」を使用することで、ユーザプログラムはInfiniBand HCAやMellanox NICなどのRDMAデバイスにユーザ空間の物理アドレスを知らせることができます。ただし、RDMA は DMA の 1 つであり、ハードウェア ロジックによってアドレス自体を変換できる点が異なります。
+
+---
 How can we come over the problem of traditional DMA? One of ideas is bypassing kernel so that any context switch never happens. The user application is programmed through virtual address because users can not refer the physical address. The user program can let the RDMA device such as InfiniBand HCA or Mellanox NIC know user space's physical address by using "verbs API" in the user program. But RDMA is one of DMA and the difference is what it can translate the address itself by its hardware logic.
 
 Step 1. 
+---
+ユーザープログラムは、malloc()を通じて仮想アドレスとして独自の空間を作成します。
+
 ---
 User program creates its own space as virtual address thru malloc().
 ```
@@ -104,6 +110,9 @@ User program creates its own space as virtual address thru malloc().
           +----------+ 0x00000000
 ```
 Step 2. 
+---
+ユーザープログラムで扱うメモリが、カーネルによってスワップアウトされないように、事前にVerbs API を介して登録されたスペースを要求します。これを**PIN**と呼びます。 PIN に加えて、ユーザープログラムはいくつかの制御リソースを作成します。その一つとして PTE があり、ユーザープログラム空間の物理アドレスと仮想アドレス間の変換テーブルとして機能するものです。この操作を**メモリレジストレーション**と呼び、 PTE はメモリレジストレーションのバックグラウンドで作成されるものとなります。ただし、メモリーレジストレーションは非常に負荷が大きいので、このAPIを呼ぶタイミングを意識したチューニングが必要となる場合が多いです。というわけで、カーネルに頼らず、通信性能を向上させるわけですから、ユーザープログラムが直接ハードウェアを操作することを行う必要があります。
+
 ---
 An user program asks the space registered thru verbs API so that the kernel could not swap it out to disk. We call it "**PIN**". In addition to the PIN, the user Program creates several control resources. One of resources is the PTE which is for translation table between physical address and virtual address of user program space. We call this operation "**Memory Registration**". The PTE is gonna be created in the background of the operation of Memory Registration. But please understand the Memory Registration is very heavy operation, so users should tune performances. These are almost everything which the user program should do for perspectives of kernel bypass before a packet arriving.
 ```
