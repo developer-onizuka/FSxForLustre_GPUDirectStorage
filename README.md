@@ -19,8 +19,7 @@ See also the URL below:
 # 2. Problems of traditional DMA
 **DMA はホスト メモリとデバイスのメモリ間のコピーです。** 以下に示すように、デバイスの BAR 空間からホスト マシンの物理メモリ アドレスへのコピーです。
 ホストとデバイス間の DMA の後、デバイスの DMA エンジンは CPU に割り込み、CPU がこの DMA 処理されたデータ (まだカーネル空間にある) を CPU 負荷
-によってユーザー空間にコピーし始めることができます。これは DMA ではありません。次に、カーネル内のスペースが次の DMA 操作のために解放されます。
-これは DMA のフロー制御として知られています。
+によってユーザー空間にコピーし始めることができます。次に、カーネル内のスペースが次の DMA 操作のために解放されます。これは DMA のフロー制御として知られています。
 カーネル空間からユーザー空間へのコピーは、CPU 負荷のある一部のプロセスによって実行されたことに注意してください。これは、コピーが「仮想アドレス」
 を通じて実行されたことを意味します。 もちろん、コピーには「物理アドレス」が必要です。
 
@@ -291,16 +290,16 @@ In GDS, GPU provides its BAR and the NVMe's DMA Engine accesses the physical add
 ![gpudirect-rdma.png](https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/GPUDirect/gpudirect-rdma.png)
 
 ---
-Previously mentioned GPUDirect Storage involves DMA between GPU memory and NVMe. GPUDirect RDMA, on the other hand, is treated as DMA between GPU memory on separate nodes. The concept can be visualized as follows: In large-scale language models like 70B, updating parameters alone requires around 140GB of capacity, so model parallelism techniques such as tensor parallelism and pipeline parallelism are sometimes employed. Within these parallelization methods, collective communications like All Reduce occur at the end of each layer's processing in neural networks, necessitating direct data exchange between GPUs.
+The GPUDirect Storage involves DMA between GPU memory and NVMe. GPUDirect RDMA, on the other hand, is treated as DMA between GPU memory on separate nodes. In other words, it is the previously mentioned RDMA, but with the destination being GPU memory instead of host memory. In large-scale language models like 70B, updating parameters alone requires around 140GB of capacity, leading to the use of model parallelism techniques such as tensor parallelism and pipeline parallelism. These parallelization methods involve collective communications like All Reduce at the end of each neural network layer's processing, necessitating direct data exchange between GPUs.
 
-In such scenarios, GPUDirect RDMA is used for data exchange directly between GPU memories without passing through host memory.
+In such scenarios, GPUDirect RDMA is employed for direct data exchange between GPU memories, bypassing the host memory.
 The principle is to copy data using the DMA engine of the NIC with RDMA enabled, as shown in the diagram below.
 
 ```
          Physical Memory
           +----------+                                          
           |          |                                          RDMA NIC
-          +----------+ 0xff603fff                Fetching       +----------+
+          +----------+ 0xff700000                Fetching       +----------+
    +----- |XXXXXXXXXX| <--------------------------------------- |XXXXXXXXXX| Data Arrival as a InfiniBand Packet
    |      +----------+ 0xff600000 (NIC's BAR)                   |          |
   Copy    |          |                                          +----------+
@@ -327,3 +326,9 @@ The principle is to copy data using the DMA engine of the NIC with RDMA enabled,
           +----------+ 0x00000000
 
 ```
+
+# 6. Summary
+今回、HPCや機械学習など高スループットが必要なワークロードに最適な**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説をしました。また、データサイエンティストとデベロッパーが高品質の機械学習 (ML) モデルを準備、構築、トレーニング、およびデプロイするのを支援する**Amazon SageMaker AI** は、インスタンス間での高速なデータ交換をするためのGPUDirect RDMAを解説しました。
+
+---
+I explained a detailed explanation from a hardware perspective about GPUDirect Storage used in **AWS FSx For Luster**, which is ideal for workloads that require high throughput such as HPC and machine learning. Amazon SageMaker AI also helps data scientists and developers prepare, build, train, and deploy high-quality machine learning (ML) models for fast data exchange between instances. Also explained GPUDirect RDMA.
