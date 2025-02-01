@@ -2,7 +2,7 @@
 
 ここでは、**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説します。より高い性能を追求するためには、計算機科学の視点からAWSの実装を抑えておくことはとても重要です。
 
-まず、GPUDirect Storageの前に、RDMAを簡単に理解しておく必要があります。
+今回は、DMAやRDMAの基本的なテクノロジーを抑えた上で、GPUDirect Storage、GPUDirect RDMAについて解説して行きたいと思います。
 
 # 1. What is RDMA ?
 RDMA はリモート ダイレクト メモリ アクセスです。 
@@ -239,3 +239,44 @@ Step 5.
           +----------+ 0x00000000
 ```
 
+# 4. GPUDirect Storage
+さて、前置きが長くなりましたが、GDS とは、ストレージ (NVMe または NIC) 近くの DMA エンジンがデータを GPU メモリに直接プッシュ (またはプル) するための特別なDMAテクノロジーです。
+GDSのDMAオペレーションでは、ホストメモリの代わりに、PCI デバイス上の BAR スペースをターゲットとして使用することになります。GDS では、GPU がその BAR を提供し、NVMe の DMA エンジンは、カーネルが GPU の BAR を介してマッピングした物理アドレスにアクセスします。 GDSに関するDMA は、NVMe の DMA エンジンによって、GPU BAR スペースと NVMe BAR スペース (わずか 16KB、正規の NVMe デバイスに必要) 間のコピーを通じて実行されます。 (GPU の DMA エンジンによるものではありません) 
+
+---
+We can use BAR space on a PCI device as a target instead of host memory for DMA operation. According the P2P DMA, One device needs to present a memory BAR, and the other one accesses it. 
+In GDS, GPU provides its BAR and the NVMe's DMA Engine accesses the physical address which the kernel mapped into thru the GPU's BAR. The P2P DMA is done thru the copy between GPU BAR space and NVMe Bar space (only 16KB, any legitimate NVMe device must have) by NVMe's DMA Engine. (Not by GPU's DMA Engine) 
+
+```
+         Physical Memory
+          +----------+                                          The file in NVMe Storage
+          |          |                                          (mount -t ext4 -o data=ordered /dev/nvme0n1 /mnt)
+          +----------+ 0xfd603fff                Fetching       +----------+
+   +----- |XXXXXXXXXX| 16KB  <--------------------------------- |XXXXXXXXXX| /mnt/test.txt
+   |      +----------+ 0xfd600000 (NVMe's BAR)                  |          |
+  Copy*   |          |                                          +----------+
+(P2P DMA) |          |                                           
+   |      +----------+ 0xdfffffff                               GPU Memory associated with CudaMalloc()
+   |      |          |     Copy from BAR space to GPU Memory    +----------+
+   +----> |XXXXXXXXXX| ---------------------------------------> |XXXXXXXXXX| ---> Cunsumed by GPU core
+          +----------+ 0xd0000000 (GPU's BAR)                   |          |
+          |          |                                          +----------+
+          |          |
+          |          |                                          Kernel Space (Virtual Address)
+          |          |                                          +----------+
+          |          |                                          |          |
+          |          |                                          |          |
+          |          |                                          +----------+
+          |          |                                                      
+          |          |                                          +----------+
+          |          |                                          |          |
+          |          |                                          |          |
+          |          |                                          |          |
+          |          |                                          +----------+
+          |          |                                          User Space (Virtual Address)
+          |          |
+          +----------+ 0x00000000
+
+   * : I believe the NVMe's DMA Engine do this copy. Not by GPU's DMA Engine.
+
+```
