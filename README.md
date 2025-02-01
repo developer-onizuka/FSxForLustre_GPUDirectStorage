@@ -244,6 +244,8 @@ Step 5.
 GDSのDMAオペレーションでは、ホストメモリの代わりに、PCI デバイス上の BAR スペースをターゲットとして使用することになります。GDS では、GPU がその BAR を提供し、NVMe の DMA エンジンは、カーネルが GPU の BAR を介してマッピングした物理アドレスにアクセスします。 GDSに関するDMA は、NVMe の DMA エンジンによって、GPU BAR スペースと NVMe BAR スペース (わずか 16KB、正規の NVMe デバイスに必要) 間のコピーを通じて実行されます。 (GPU の DMA エンジンによるものではありません)    
 詳細は、[What is GPUDirect Storage?](https://github.com/developer-onizuka/what_is_GPUDirect-Storage)を参照してください。
 
+![magnum-io-gpudirect-storage-l.svg](https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/magnum-io-gpudirect-storage-l.svg)
+
 ---
 We can use BAR space on a PCI device as a target instead of host memory for DMA operation. According the P2P DMA, One device needs to present a memory BAR, and the other one accesses it. 
 In GDS, GPU provides its BAR and the NVMe's DMA Engine accesses the physical address which the kernel mapped into thru the GPU's BAR. The P2P DMA is done thru the copy between GPU BAR space and NVMe Bar space (only 16KB, any legitimate NVMe device must have) by NVMe's DMA Engine. (Not by GPU's DMA Engine) 
@@ -287,6 +289,11 @@ In GDS, GPU provides its BAR and the NVMe's DMA Engine accesses the physical add
 このようにホストメモリを介さず、直接GPUメモリ間でのデータ交換をする際に、GPUDirect RDMAが用いられることになります。
 
 ![gpudirect-rdma.png](https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/GPUDirect/gpudirect-rdma.png)
+
+---
+Previously mentioned GPUDirect Storage involves DMA between GPU memory and NVMe. GPUDirect RDMA, on the other hand, is treated as DMA between GPU memory on separate nodes. The concept can be visualized as follows: In large-scale language models like 70B, updating parameters alone requires around 140GB of capacity, so model parallelism techniques such as tensor parallelism and pipeline parallelism are sometimes employed. Within these parallelization methods, collective communications like All Reduce occur at the end of each layer's processing in neural networks, necessitating direct data exchange between GPUs.
+
+In such scenarios, GPUDirect RDMA is used for data exchange directly between GPU memories without passing through host memory.
 
 
 原理としては、以下図のようにRDMAが有効なNICのDMAエンジンを使ったデータのコピーとなります。
