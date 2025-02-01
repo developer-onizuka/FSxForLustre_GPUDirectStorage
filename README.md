@@ -284,4 +284,4 @@ In GDS, GPU provides its BAR and the NVMe's DMA Engine accesses the physical add
 # 5. GPUDirect RDMA
 前述のGPUDirect Storageは、GPUメモリとNVMeとの間でのDMAでした。GPUDirect RDMAは、別ノードにおけるGPUメモリとGPUメモリの間でのDMAとして扱われるものです。イメージとしてはこんな感じです。
 
-[gpudirect-rdma.png]<https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/GPUDirect/gpudirect-rdma.png>
+[gpudirect-rdma.png](https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/GPUDirect/gpudirect-rdma.png)
