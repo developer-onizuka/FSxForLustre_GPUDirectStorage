@@ -2,7 +2,7 @@
 
 ここでは、**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説します。より高い性能を追求するためには、計算機科学の視点からAWSの実装を抑えておくことはとても重要です。また、**Amazon SageMaker AI** は、ハイパフォーマンスコンピューティング (HPC) および機械学習アプリケーションを高速化するためにEFA(InfiniBand)を用い、GPUDirect RDMAを通じたインスタンス間でのデータ交換が行われます。
 
-今回は、DMAやRDMAの基本的なテクノロジーを抑えた上で、GPUDirect Storage、GPUDirect RDMAを理解することでAWS FSx For LustreとSageMakerを効果的に使うための基礎を解説したいと思っています。
+今回は、DMAやRDMAの基本的なテクノロジーを抑えた上で、AWS FSx For LustreとSageMakerの基礎となるGPUDirect Storage、GPUDirect RDMAを解説したいと思っています。
 
 # 1. What is RDMA ?
 RDMA はリモート ダイレクト メモリ アクセスです。 
