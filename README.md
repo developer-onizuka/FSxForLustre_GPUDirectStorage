@@ -294,9 +294,8 @@ In GDS, GPU provides its BAR and the NVMe's DMA Engine accesses the physical add
 Previously mentioned GPUDirect Storage involves DMA between GPU memory and NVMe. GPUDirect RDMA, on the other hand, is treated as DMA between GPU memory on separate nodes. The concept can be visualized as follows: In large-scale language models like 70B, updating parameters alone requires around 140GB of capacity, so model parallelism techniques such as tensor parallelism and pipeline parallelism are sometimes employed. Within these parallelization methods, collective communications like All Reduce occur at the end of each layer's processing in neural networks, necessitating direct data exchange between GPUs.
 
 In such scenarios, GPUDirect RDMA is used for data exchange directly between GPU memories without passing through host memory.
+The principle is to copy data using the DMA engine of the NIC with RDMA enabled, as shown in the diagram below.
 
-
-原理としては、以下図のようにRDMAが有効なNICのDMAエンジンを使ったデータのコピーとなります。
 ```
          Physical Memory
           +----------+                                          
