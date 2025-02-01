@@ -1,6 +1,6 @@
 # FSxForLustre_GPUDirectStorage
 
-ここでは、**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説します。より高い性能を追求するためには、計算機科学の視点からAWSの実装を抑えておくことはとても重要です。
+ここでは、**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説します。より高い性能を追求するためには、計算機科学の視点からAWSの実装を抑えておくことはとても重要です。また、SageMaker AI は、ハイパフォーマンスコンピューティング (HPC) および機械学習アプリケーションを高速化するためにEFA(InfiniBand)を用い、GPUDirect RDMAを通じたインスタンス間でのデータ交換が行われます。
 
 今回は、DMAやRDMAの基本的なテクノロジーを抑えた上で、GPUDirect Storage、GPUDirect RDMAについて解説して行きたいと思います。
 
@@ -241,7 +241,8 @@ Step 5.
 
 # 4. GPUDirect Storage
 さて、前置きが長くなりましたが、GDS とは、ストレージ (NVMe または NIC) 近くの DMA エンジンがデータを GPU メモリに直接プッシュ (またはプル) するための特別なDMAテクノロジーです。
-GDSのDMAオペレーションでは、ホストメモリの代わりに、PCI デバイス上の BAR スペースをターゲットとして使用することになります。GDS では、GPU がその BAR を提供し、NVMe の DMA エンジンは、カーネルが GPU の BAR を介してマッピングした物理アドレスにアクセスします。 GDSに関するDMA は、NVMe の DMA エンジンによって、GPU BAR スペースと NVMe BAR スペース (わずか 16KB、正規の NVMe デバイスに必要) 間のコピーを通じて実行されます。 (GPU の DMA エンジンによるものではありません) 
+GDSのDMAオペレーションでは、ホストメモリの代わりに、PCI デバイス上の BAR スペースをターゲットとして使用することになります。GDS では、GPU がその BAR を提供し、NVMe の DMA エンジンは、カーネルが GPU の BAR を介してマッピングした物理アドレスにアクセスします。 GDSに関するDMA は、NVMe の DMA エンジンによって、GPU BAR スペースと NVMe BAR スペース (わずか 16KB、正規の NVMe デバイスに必要) 間のコピーを通じて実行されます。 (GPU の DMA エンジンによるものではありません)    
+詳細は、[What is GPUDirect Storage?](https://github.com/developer-onizuka/what_is_GPUDirect-Storage)を参照してください。
 
 ---
 We can use BAR space on a PCI device as a target instead of host memory for DMA operation. According the P2P DMA, One device needs to present a memory BAR, and the other one accesses it. 
@@ -282,6 +283,41 @@ In GDS, GPU provides its BAR and the NVMe's DMA Engine accesses the physical add
 ```
 
 # 5. GPUDirect RDMA
-前述のGPUDirect Storageは、GPUメモリとNVMeとの間でのDMAでした。GPUDirect RDMAは、別ノードにおけるGPUメモリとGPUメモリの間でのDMAとして扱われるものです。イメージとしてはこんな感じです。
+前述のGPUDirect Storageは、GPUメモリとNVMeとの間でのDMAでした。GPUDirect RDMAは、別ノードにおけるGPUメモリとGPUメモリの間でのDMAとして扱われるものです。イメージとしてはこんな感じです。70Bの大規模言語モデルでは、このパラメータを更新するだけでも、約140GB程度の容量が必要になってくるため、テンソル並列、パイプライン並列のようなモデル並列を行うことがあります。これらの並列化手法の中では、ニューラルネットワークの各層の処理が終わる度にAll Reduceのような集団通信を発生させ、GPU間で直接データ交換が必要になってきます。   
+このようにホストメモリを介さず、直接GPUメモリ間でのデータ交換をする際に、GPUDirect RDMAが用いられることになります。
 
 ![gpudirect-rdma.png](https://d29g4g2dyqv443.cloudfront.net/sites/default/files/akamai/GPUDirect/gpudirect-rdma.png)
+
+
+原理としては、以下図のようにRDMAが有効なNICのDMAエンジンを使ったデータのコピーとなります。
+```
+         Physical Memory
+          +----------+                                          
+          |          |                                          RDMA NIC
+          +----------+ 0xff603fff                Fetching       +----------+
+   +----- |XXXXXXXXXX| <--------------------------------------- |XXXXXXXXXX| Data Arrival as a InfiniBand Packet
+   |      +----------+ 0xff600000 (NIC's BAR)                   |          |
+  Copy    |          |                                          +----------+
+(P2P DMA) |          |                                           
+   |      +----------+ 0xdfffffff                               GPU Memory associated with CudaMalloc()
+   |      |          |     Copy from BAR space to GPU Memory    +----------+
+   +----> |XXXXXXXXXX| ---------------------------------------> |XXXXXXXXXX| ---> Cunsumed by GPU core
+          +----------+ 0xd0000000 (GPU's BAR)                   |          |
+          |          |                                          +----------+
+          |          |
+          |          |                                          Kernel Space (Virtual Address)
+          |          |                                          +----------+
+          |          |                                          |          |
+          |          |                                          |          |
+          |          |                                          +----------+
+          |          |                                                      
+          |          |                                          +----------+
+          |          |                                          |          |
+          |          |                                          |          |
+          |          |                                          |          |
+          |          |                                          +----------+
+          |          |                                          User Space (Virtual Address)
+          |          |
+          +----------+ 0x00000000
+
+```
