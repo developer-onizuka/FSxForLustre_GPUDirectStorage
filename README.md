@@ -144,6 +144,9 @@ An user program asks the space registered thru verbs API so that the kernel coul
 
 Step 3. 
 ---
+パケットはNICに到着すると、データは NIC 上の BAR スペースに置かれます。しかし、この時点では、NICのDMAエンジンは、どこに DMA を実行すべきかを実は知りません。
+
+---
 Data comes into the NIC logic and put it on BAR space on NIC. But **the DMA engine doesn't know where it should do DMA to!**
 ```
           Physical Memory
@@ -173,6 +176,9 @@ Data comes into the NIC logic and put it on BAR space on NIC. But **the DMA engi
 ```
 Step 4. 
 ---
+DMAエンジンは、どこにDMAするかを知る必要があります。このため、ホストメモリの特定のスペースから PTE#1 をフェッチします。このPTE#1には、ユーザー空間に対するコピー先がプログラムされています。これにより、DMAエンジンはNICとユーザー空間の間でコピーできるようになります。しかし、**ユーザー プロセスはカーネル介入なしでコピーの完了をどのように理解するのか？**という疑問は残ります。 これは、**割り込み**と呼ばれるカーネル機能を使用していないためなのですが、RDMAを扱う上での対策しないといけない課題です。それはStep5で説明します。
+
+---
 DMA Engine starts fetching the PTE#1 from certain space from host memory so that it can know where it does DMA. Then, DMA Engine can copy between NIC and user space without additional copies. But **how does the user process understand the completion of copy without kernel interventions???** This is a new problem while we don't use kernel features which we call "interrupts".
 ```
           Physical Memory
@@ -201,6 +207,9 @@ DMA Engine starts fetching the PTE#1 from certain space from host memory so that
           +----------+ 0x00000000
 ```
 Step 5. 
+---
+**DMA エンジンは、カーネルに割り込みするのではなく、Completion Queue (CQE#1) というものを作成します。** そして、ユーザープログラムは、CQE が作成されるまでポーリングします。これで RDMA ステップは終了です。完了後、BAR スペースのデータは (ポインターをインクリメントすることによって) 削除でき、NIC の受信機は次のパケットを受信する準備が整います。 PTE や CQE などのホスト メモリ内の各リソースは、後続のプロセスがこれらのリソースを使用しない場合、破棄され固定解除されます。また先述の通り、メモリレジストレーションは非常にコストの高い操作なので、再利用することをお勧めします。
+
 ---
 **DMA Engine creates the Completion Queue(CQE#1) instead of interruptting to the kernel.** The user program polls until a CQE is created. This is the end of RDMA step. After completion, the data of BAR space can be removed (by incrementing the pointer) and NIC's receiver is ready for receiving the next packet. Each resource in host memory such as PTE or CQE will be destroyed and unpinned if subsequent process does not use these resources. The space already registered may be used again so that we can prevent from heavy process of memory registration.
 ```
