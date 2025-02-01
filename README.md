@@ -1,6 +1,6 @@
-# FSxForLustre_GPUDirectStorage
+# AWS FSx For LustreのGPUDirect StorageとAmazon SageMaker AIのEFA活用によるHPCと機械学習の高速化
 
-ここでは、**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説します。より高い性能を追求するためには、計算機科学の視点からAWSの実装を抑えておくことはとても重要です。また、SageMaker AI は、ハイパフォーマンスコンピューティング (HPC) および機械学習アプリケーションを高速化するためにEFA(InfiniBand)を用い、GPUDirect RDMAを通じたインスタンス間でのデータ交換が行われます。
+ここでは、**AWS FSx For Lustre**で用いられるGPUDirect Storageについて、ハードウェア視点から詳細に解説します。より高い性能を追求するためには、計算機科学の視点からAWSの実装を抑えておくことはとても重要です。また、**Amazon SageMaker AI** は、ハイパフォーマンスコンピューティング (HPC) および機械学習アプリケーションを高速化するためにEFA(InfiniBand)を用い、GPUDirect RDMAを通じたインスタンス間でのデータ交換が行われます。
 
 今回は、DMAやRDMAの基本的なテクノロジーを抑えた上で、GPUDirect Storage、GPUDirect RDMAについて解説して行きたいと思います。
 
