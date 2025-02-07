@@ -28,9 +28,9 @@ See also the URL below:
 つまり、DMA 後のコピーでは、カーネルだけが仮想アドレスと物理アドレス間のマッピングを知っているため、一部のプロセス (TCP/IP および NIC ドライバー) は
 カーネル API を呼び出して仮想アドレスから物理アドレスに変換します。この変換後、ハードウェアによって物理コピーが実行されます。
 
-非常に高スループットの NIC を使用している場合、どれくらいの割り込みが発生すると思いますか?現在、Mellanox や Intel からは非常に多くの高性能 NIC 
-が提供されています。ここで問題になるのは、追加の CPU ワークロードを引き起こすこれらの大量の割り込みそのものです。 CPUはNICなどのI/O専用ではなく、
-ユーザープログラムの処理も含めた用途に使用されます。さらには、CPUが占有されるだけでなく、**貴重なTLBなどのリソース**も使われてしまいます。
+非常に高スループットの NIC を使用している場合、どれくらいの割り込みが発生するかというと、多少の工夫はあるとは思いますが、その帯域に比例するくらいの割り込みが
+発生します。現在、Mellanox や Intel からは非常に多くの高性能 NIC が提供されていまして、ここで問題になるのは、これらの大量の割り込みそのものです。 
+CPUはNICなどのI/O専用ではなく、ユーザープログラムの処理も含めた用途に使用されます。さらには、CPUが占有されるだけでなく、**貴重なTLBなどのリソース**も使われてしまうので踏んだり蹴ったりです。
 
 ---
 **DMA is a copy between host memory and device's memory.** As you can see below, the copy from device's BAR space to a physical memory address in host machine. After DMA between host and device, Device's DMA Engine interrupts to CPU so that CPU can start copying this DMAed data (it's still in kernel space) to the user space by CPU load, which is not DMA. Next, the space in kernel is released for the next DMA operation, which we know it as flow control of DMA.
