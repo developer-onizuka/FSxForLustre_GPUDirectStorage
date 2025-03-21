@@ -332,3 +332,27 @@ The principle is to copy data using the DMA engine of the NIC with RDMA enabled,
 
 ---
 I explained a detailed explanation from a hardware perspective about GPUDirect Storage used in **AWS FSx For Luster**, which is ideal for workloads that require high throughput such as HPC and machine learning. Amazon SageMaker AI also helps data scientists and developers prepare, build, train, and deploy high-quality machine learning (ML) models with fast data exchange between instances. Also explained GPUDirect RDMA.
+
+
+# Appendix
+GPUDirect Storageを試行用のプログラムを本リポジトリに添付しています。ご参考にしてください。
+
+```
+   $ sudo apt install nvidia-cuda-toolkit
+   $ sudo apt install libssl-dev
+   $ nvcc -I /usr/local/cuda/include/  -I /usr/local/cuda/targets/x86_64-linux/lib/ strrev_gds.cu -o strrev_gds.co -L /usr/local/cuda/targets/x86_64-linux/lib/ -lcufile -L /usr/local/cuda/lib64/ -lcuda -L   -Bstatic -L /usr/local/cuda/lib64/ -lcudart_static -lrt -lpthread -ldl -lcrypto -lssl
+   $ echo -n "Hello, GDS World!" > test.txt
+   $ ./strrev_gds.co test.txt 
+   sys_len : 17
+   !dlroW SDG ,olleH
+   See also test.txt
+   $ cat test.txt 
+   !dlroW SDG ,olleH
+   $ ./strrev_gds.co test.txt 
+   sys_len : 17
+   Hello, GDS World!
+   See also test.txt
+   $ cat test.txt 
+   Hello, GDS World!
+```
+
